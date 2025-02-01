@@ -13,6 +13,8 @@ ALL_TAGS = ['O',
             'B-Prod', 'I-Prod',
             'B-Unk', 'I-Unk']
 
+# https://github.com/Kyubyong/nlp_made_easy/blob/master/Pos-tagging%20with%20Bert%20Fine-tuning.ipynb
+# Sõnastikud, kus on vastavuses arv:märgend ja vastupidi, näiteks tag2idx sõnastikus 'B-Eve' -> 1 ning idx2tag sõnastikus siis 1 -> 'B-Eve'
 TAG2IDX = {tag: idx for idx, tag in enumerate(ALL_TAGS)}
 IDX2TAG = {idx: tag for idx, tag in enumerate(ALL_TAGS)}
 
@@ -183,3 +185,40 @@ def load_and_process_dataset(dataset_name: str) -> DatasetDict:
    test_sents = preprocess(paths['test'])
 
    return process_all(train_sents, dev_sents, test_sents, TAG2IDX)
+
+def combine_datasetdicts(dataset1, dataset2):
+  combined = DatasetDict()
+
+  for split in ['train', 'dev', 'test']:
+    combined_dict = {
+        'id': [],
+        'tags': [],
+        'tokens': []
+    }
+
+    for i, item in enumerate(dataset1[split]):
+      combined_dict['id'].append(i)
+      combined_dict['tags'].append(item['tags'])
+      combined_dict['tokens'].append(item['tokens'])
+    offset = len(dataset1[split])
+    for i, item in enumerate(dataset2[split]):
+      combined_dict['id'].append(i + offset)
+      combined_dict['tags'].append(item['tags'])
+      combined_dict['tokens'].append(item['tokens'])
+    combined[split] = Dataset.from_dict(combined_dict)
+  return combined
+
+def load_all(from_json=True):
+  try:
+    if from_json:
+      ewt_dataset = load_dataset_from_json('ewt')
+      edt_dataset = load_dataset_from_json('edt')
+      combined_dataset = load_dataset_from_json()
+    else:
+      ewt_dataset = load_and_process_dataset('ewt')
+      edt_dataset = load_and_process_dataset('edt')
+      combined_dataset = combine_datasetdicts(ewt_dataset, edt_dataset)
+    
+    return ewt_dataset, edt_dataset, combined_dataset
+  except:
+    print(f"error andmete laadimisel from_json={from_json}")
