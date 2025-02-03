@@ -3,18 +3,15 @@ import json
 from estnltk.converters.conll import conll_importer
 from datasets import Dataset, DatasetDict
 
-ALL_TAGS = ['O',
-            'B-Eve', 'I-Eve',
-            'B-Gep', 'I-Gep',
-            'B-Loc', 'I-Loc',
-            'B-Muu', 'I-Muu',
-            'B-Org', 'I-Org',
-            'B-Per', 'I-Per',
-            'B-Prod', 'I-Prod',
-            'B-Unk', 'I-Unk']
-
-# https://github.com/Kyubyong/nlp_made_easy/blob/master/Pos-tagging%20with%20Bert%20Fine-tuning.ipynb
-# Sõnastikud, kus on vastavuses arv:märgend ja vastupidi, näiteks tag2idx sõnastikus 'B-Eve' -> 1 ning idx2tag sõnastikus siis 1 -> 'B-Eve'
+ALL_TAGS = ['O', 
+            'B-EVE', 'I-EVE', 
+            'B-GEP', 'I-GEP', 
+            'B-LOC', 'I-LOC', 
+            'B-MUU', 'I-MUU', 
+            'B-ORG', 'I-ORG', 
+            'B-PER', 'I-PER', 
+            'B-PROD', 'I-PROD', 
+            'B-UNK', 'I-UNK']
 TAG2IDX = {tag: idx for idx, tag in enumerate(ALL_TAGS)}
 IDX2TAG = {idx: tag for idx, tag in enumerate(ALL_TAGS)}
 
@@ -69,13 +66,13 @@ def preprocess(dataset_path: str) -> list:
                     tag = misc['NE']
                   else:
                     # Kaks üksikut juhtu, kus kahe elemendi pikkune nimeüksus oli märgendatud (_, Per), (_, Per) või (_, Org), (_, Org)
-                    if parsed_sent[-1][1] == 'B-Org' and misc['NE'] == 'Org':
+                    if parsed_sent[-1][1] == 'B-ORG' and misc['NE'] == 'Org':
                       tag = 'I-Org'
-                    if parsed_sent[-1][1] == 'B-Per' and misc['NE'] == 'Per':
+                    if parsed_sent[-1][1] == 'B-PER' and misc['NE'] == 'Per':
                       tag = 'I-Per'
                     else:
                       tag = corrections[misc['NE']]
-            pair = (word.text, tag)
+            pair = (word.text, tag.upper())
             #print(f"({word.text}, {tag})")
             parsed_sent.append(pair)
         parsed_sents.append(parsed_sent)
@@ -185,7 +182,7 @@ def load_and_process_dataset(dataset_name: str) -> DatasetDict:
    test_sents = preprocess(paths['test'])
 
    return process_all(train_sents, dev_sents, test_sents, TAG2IDX)
-
+   
 def combine_datasetdicts(dataset1, dataset2):
   combined = DatasetDict()
 
@@ -207,7 +204,7 @@ def combine_datasetdicts(dataset1, dataset2):
       combined_dict['tokens'].append(item['tokens'])
     combined[split] = Dataset.from_dict(combined_dict)
   return combined
-
+  
 def load_all(from_json=True):
   try:
     if from_json:
