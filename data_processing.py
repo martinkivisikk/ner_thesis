@@ -1,5 +1,6 @@
 import os
 import json
+import re
 from estnltk.converters.conll import conll_importer
 from datasets import Dataset, DatasetDict
 
@@ -14,6 +15,17 @@ ALL_TAGS = ['O',
             'B-UNK', 'I-UNK']
 TAG2IDX = {tag: idx for idx, tag in enumerate(ALL_TAGS)}
 IDX2TAG = {idx: tag for idx, tag in enumerate(ALL_TAGS)}
+
+char_map = {
+    "à": "ä",
+    "ù": "ü",
+    "ò": "o"
+}
+
+pattern = re.compile("|".join(re.escape(k) for k in char_map.keys()))
+
+def replace_chars(text):
+    return pattern.sub(lambda m: char_map[m.group(0)], text)
 
 def get_dataset_paths(dataset: str) -> dict:
     # Sisend: andmestiku nimi sõnena (ewt/edt)
@@ -72,7 +84,7 @@ def preprocess(dataset_path: str) -> list:
                       tag = 'I-Per'
                     else:
                       tag = corrections[misc['NE']]
-            pair = (word.text, tag.upper())
+            pair = (replace_chars(word.text), tag.upper())
             #print(f"({word.text}, {tag})")
             parsed_sent.append(pair)
         parsed_sents.append(parsed_sent)
