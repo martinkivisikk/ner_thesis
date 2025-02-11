@@ -1,0 +1,92 @@
+import numpy as np
+from nervaluate import Evaluator
+import evaluate
+
+class BERTEvaluator:
+    def __init__(self, all_tags, ner_tags=['EVE', 'GEP', 'LOC', 'MUU', 'ORG', 'PER', 'PROD', 'UNK']):
+        self.all_tags = all_tags
+        self.ner_tags = ner_tags
+        self.seqeval = evaluate.load("seqeval")
+
+    def compute_metrics(self, p):
+        predictions, labels = p
+        predictions = np.argmax(predictions, axis=2)
+
+        true_predictions = [
+            [self.all_tags[p] for (p, l) in zip(prediction, label) if l != -100]
+            for prediction, label in zip(predictions, labels)
+        ]
+        true_labels = [
+            [self.all_tags[l] for (p, l) in zip(prediction, label) if l != -100]
+            for prediction, label in zip(predictions, labels)
+        ]
+
+        results = self.seqeval.compute(predictions=true_predictions, references=true_labels)
+
+        metrics = {
+            "precision": results["overall_precision"],
+            "recall": results["overall_recall"],
+            "f1": results["overall_f1"],
+            "accuracy": results["overall_accuracy"],
+        }
+
+        # märgendikaupa tulemused ka
+        for tag, values in results.items():
+            if isinstance(values, dict):
+                metrics[f"{tag} Precision"] = values["precision"]
+                metrics[f"{tag} Recall"] = values["recall"]
+                metrics[f"{tag} F1"] = values["f1"]
+                metrics[f"{tag} Number"] = values["number"]
+
+        return metrics
+
+    
+    def get_predictions(self, dataset, trainer):
+        predictions, labels, _ = trainer.predict(dataset)
+        predictions = np.argmax(predictions, axis=2)
+
+        true_predictions = [
+            [self.all_tags[p] for (p, l) in zip(prediction, label) if l != -100]
+            for prediction, label in zip(predictions, labels)
+        ]
+        true_labels = [
+            [self.all_tags[l] for (p, l) in zip(prediction, label) if l != -100]
+            for prediction, label in zip(predictions, labels)
+        ]
+
+        return true_predictions, true_labels
+
+    def get_seqeval_results(self, predictions, actual):
+        results = self.seqeval.compute(predictions=predictions, references=actual)
+        return results
+
+    def get_nervaluate_results(self, predictions, actual):
+        evaluator = Evaluator(actual, predictions, tags=self.ner_tags, loader="list")
+        results, results_by_tag, result_indices, result_indices_by_tag = evaluator.evaluate()
+        return results, results_by_tag, result_indices, result_indices_by_tag
+
+    def evaluate_model(self, test_dataset, trainer):
+        predictions = self.get_predictions(test_dataset, trainer)
+        seqeval_result = self.get_seqeval_results(*predictions)
+        results, results_by_tag, result_indices, result_indices_by_tag = self.get_nervaluate_results(*predictions)
+        return seqeval_result, results, results_by_tag
+
+    def print_results(self, seqeval_result, nereval_result, nereval_by_tag):
+        print("Seqeval tulemused")
+        for key in seqeval_result:
+            print(key, seqeval_result[key])
+
+        print()
+        print("Nervaluate tulemused")
+        print("Strict", nereval_result['strict'])
+        print("precision", nereval_result['strict']['precision'])
+        print("recall", nereval_result['strict']['recall'])
+        print("f1", nereval_result['strict']['f1'])
+
+        for tag in nereval_by_tag:
+            print(tag, nereval_by_tag[tag]['strict'])
+
+    def evaluate_and_print(self, test_dataset, trainer):
+        results = self.evaluate(test_dataset, trainer)
+        self.print_results(*results)
+        return results

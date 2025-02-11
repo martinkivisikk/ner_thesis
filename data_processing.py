@@ -2,9 +2,11 @@ import os
 import json
 import re
 from estnltk.converters.conll import conll_importer
+from estnltk import Text
 from datasets import Dataset, DatasetDict
 
-ALL_TAGS = ['O', 
+class DatasetProcessor:
+    ALL_TAGS = ['O', 
             'B-EVE', 'I-EVE', 
             'B-GEP', 'I-GEP', 
             'B-LOC', 'I-LOC', 
@@ -13,221 +15,194 @@ ALL_TAGS = ['O',
             'B-PER', 'I-PER', 
             'B-PROD', 'I-PROD', 
             'B-UNK', 'I-UNK']
-TAG2IDX = {tag: idx for idx, tag in enumerate(ALL_TAGS)}
-IDX2TAG = {idx: tag for idx, tag in enumerate(ALL_TAGS)}
+    TAG2IDX = {tag: idx for idx, tag in enumerate(ALL_TAGS)}
+    IDX2TAG = {idx: tag for idx, tag in enumerate(ALL_TAGS)}
 
-char_map = {
-    "à": "ä",
-    "ù": "ü",
-    "ò": "o"
-}
-
-pattern = re.compile("|".join(re.escape(k) for k in char_map.keys()))
-
-def replace_chars(text):
-    return pattern.sub(lambda m: char_map[m.group(0)], text)
-
-def get_dataset_paths(dataset: str) -> dict:
-    # Sisend: andmestiku nimi sõnena (ewt/edt)
-    # Väljund: sõnastik, mis sisaldab train/dev/test failiteid
-    dataset_dir = os.path.join('data', dataset)
-    files = os.listdir(dataset_dir)
-
-    paths = {}
-    for split in ['train', 'dev', 'test']:
-        matching_file = next(f for f in files if f'-ud-{split}.' in f)
-        paths[split] = os.path.join(dataset_dir, matching_file)
-
-    return paths
-
-def preprocess(dataset_path: str) -> list:
-    # Sisend: andmestiku failitee sõnena
-    # Väljund: List, mis sisaldab parsitud lauseid
-    # Iga lause on paaride list kujul [(w0, t0), (w1, t1), ..., (wn, tn)], kus w tähistab sõna ja t sõnale vastavat märgendit.
-
-    dataset = conll_importer.conll_to_text(file=dataset_path)
-    parsed_sents = []
-    known_tags = ['B-Eve', 'I-Eve',
-                  'B-Gep', 'I-Gep',
-                  'B-Loc', 'I-Loc',
-                  'B-Muu', 'I-Muu',
-                  'B-Org', 'I-Org',
-                  'B-Per', 'I-Per',
-                  'B-Prod', 'I-Prod',
-                  'B-Unk', 'I-Unk']
-
+    KNOWN_TAGS = ['B-Eve', 'I-Eve',
+                    'B-Gep', 'I-Gep',
+                    'B-Loc', 'I-Loc',
+                    'B-Muu', 'I-Muu',
+                    'B-Org', 'I-Org',
+                    'B-Per', 'I-Per',
+                    'B-Prod', 'I-Prod',
+                    'B-Unk', 'I-Unk']
     # Kuna andmestikus on üksikud vead, aga on enam-vähem selge, mida tegelikult mõeldi, siis teeme vastavad parandused.
-    corrections = {
-      'B-OrgSpaceAfter': 'B-Org',
-      'B_Gep': 'B-Gep',
-      'i-Prod': 'I-Prod',
-      'Org': 'B-Org',
-      'Per': 'B-Per',
-      'BäOrg': 'B-Org',
-      'B.Prod': 'B-Prod',
-      'I-per': 'I-Per'
-    }
+    CORRECTIONS = {
+            'B-OrgSpaceAfter': 'B-Org',
+            'B_Gep': 'B-Gep',
+            'i-Prod': 'I-Prod',
+            'Org': 'B-Org',
+            'Per': 'B-Per',
+            'BäOrg': 'B-Org',
+            'B.Prod': 'B-Prod',
+            'I-per': 'I-Per'}
 
-    for sent in dataset.sentences:
-        parsed_sent = []
-        for word, misc in zip(sent.words, sent.conll_syntax.misc):
-            tag = 'O'
-            if misc:
-                if 'NE' in misc:
-                  if misc['NE'] in known_tags:
-                    tag = misc['NE']
-                  else:
-                    # Kaks üksikut juhtu, kus kahe elemendi pikkune nimeüksus oli märgendatud (_, Per), (_, Per) või (_, Org), (_, Org)
-                    if parsed_sent[-1][1] == 'B-ORG' and misc['NE'] == 'Org':
-                      tag = 'I-Org'
-                    if parsed_sent[-1][1] == 'B-PER' and misc['NE'] == 'Per':
-                      tag = 'I-Per'
-                    else:
-                      tag = corrections[misc['NE']]
-            pair = (replace_chars(word.text), tag.upper())
-            #print(f"({word.text}, {tag})")
-            parsed_sent.append(pair)
-        parsed_sents.append(parsed_sent)
-
-    return parsed_sents
-
-def split_to_token_and_tag(sents, tag2idx):
-  # Sisend: parsitud laused ja tag2idx sõnastik
-  # Väljund: Sõnastike list
-  # Sõnastik sisaldab kolme elementi: lause ID täisarvuna, märgendite list arvulisel kujul ning sõnade list
-
-  res = {}
-  #res = []
-  for i, sent in enumerate(sents):
-    tags = [tag2idx[tag] for _, tag in sent]
-    words = [word for word, _ in sent]
-    res[i] = {
-        'id': i,
-        'tags': tags,
-        'tokens': words
-    }
-
-  return res
-
-def transform_set(data):
-  transformed = {
-      "id": [v["id"] for v in data.values()],
-      "tags": [v["tags"] for v in data.values()],
-      "tokens": [v["tokens"] for v in data.values()]
-  }
-  ds = Dataset.from_dict(transformed)
-  return ds
-
-def process_all(train_sents, dev_sents, test_sents, tag2idx):
-  # Sisend: train/dev/test lausete listid ja tag2idx sõnastik
-  # Väljund: töödeldud andmestik
-  train = split_to_token_and_tag(train_sents, tag2idx)
-  dev = split_to_token_and_tag(dev_sents, tag2idx)
-  test = split_to_token_and_tag(test_sents, tag2idx)
-
-  train_ds = transform_set(train)
-  dev_ds = transform_set(dev)
-  test_ds = transform_set(test)
-
-  dataset = DatasetDict({
-      'train': train_ds,
-      'dev': dev_ds,
-      'test': test_ds
-  })
-
-  return dataset
-
-def save_split_to_json(split_data, output_path):
-    serializable_data = []
-
-    for item in split_data:
-        data_dict = {
-            'id': item['id'],
-            'tags': item['tags'],
-            'tokens': item['tokens']
-        }
-        serializable_data.append(data_dict)
-
-    with open(output_path, 'w', encoding='utf-8') as f:
-        json.dump(serializable_data, f, ensure_ascii=False, indent=2)
-
-def save_dataset_to_json(dataset, name=''):
-  try:
-    for split_name, split_data in dataset.items():
-      output_path = f'data/{name}/{split_name}.json'
-      save_split_to_json(split_data, output_path)
-  except Exception as e:
-    print(f"Error: {e}")
-
-def load_split_from_json(input_path):
-    with open(input_path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-
-    dataset_dict = {
-        'id': [],
-        'tags': [],
-        'tokens': []
-    }
-
-    for item in data:
-        dataset_dict['id'].append(item['id'])
-        dataset_dict['tags'].append(item['tags'])
-        dataset_dict['tokens'].append(item['tokens'])
-
-    return Dataset.from_dict(dataset_dict)
-
-def load_dataset_from_json(name=''):
-  try:
-    dataset = DatasetDict()
-    for split_name in ['train', 'dev', 'test']:
-      input_path = f'data/{name}/{split_name}.json'
-      dataset[split_name] = load_split_from_json(input_path)
-    return dataset
-  except Exception as e:
-    print(f"Error: {e}")
-
-def load_and_process_dataset(dataset_name: str) -> DatasetDict:
-   paths = get_dataset_paths(dataset_name)
-
-   dev_sents = preprocess(paths['dev'])
-   train_sents = preprocess(paths['train'])
-   test_sents = preprocess(paths['test'])
-
-   return process_all(train_sents, dev_sents, test_sents, TAG2IDX)
-   
-def combine_datasetdicts(dataset1, dataset2):
-  combined = DatasetDict()
-
-  for split in ['train', 'dev', 'test']:
-    combined_dict = {
-        'id': [],
-        'tags': [],
-        'tokens': []
-    }
-
-    for i, item in enumerate(dataset1[split]):
-      combined_dict['id'].append(i)
-      combined_dict['tags'].append(item['tags'])
-      combined_dict['tokens'].append(item['tokens'])
-    offset = len(dataset1[split])
-    for i, item in enumerate(dataset2[split]):
-      combined_dict['id'].append(i + offset)
-      combined_dict['tags'].append(item['tags'])
-      combined_dict['tokens'].append(item['tokens'])
-    combined[split] = Dataset.from_dict(combined_dict)
-  return combined
-  
-def load_all(from_json=True):
-  try:
-    if from_json:
-      ewt_dataset = load_dataset_from_json('ewt')
-      edt_dataset = load_dataset_from_json('edt')
-      combined_dataset = load_dataset_from_json()
-    else:
-      ewt_dataset = load_and_process_dataset('ewt')
-      edt_dataset = load_and_process_dataset('edt')
-      combined_dataset = combine_datasetdicts(ewt_dataset, edt_dataset)
+    CHAR_MAP = {"à": "ä","ù": "ü","ò": "o"}
+    PATTERN = re.compile("|".join(re.escape(k) for k in CHAR_MAP.keys()))
     
-    return ewt_dataset, edt_dataset, combined_dataset
-  except:
-    print(f"error andmete laadimisel from_json={from_json}")
+    def __init__(self, dataset_name: str, from_json: bool = True):
+        self.dataset_name = dataset_name
+        self.dataset_paths = self.get_dataset_paths()
+        self.from_json = from_json
+    
+    def get_dataset_paths(self):
+        # Sisend: andmestiku nimi sõnena (ewt/edt)
+        # Väljund: sõnastik, mis sisaldab train/dev/test failiteid
+        
+        dataset_dir = os.path.join('data', self.dataset_name)
+        files = os.listdir(dataset_dir)
+        paths = {}
+        for split in ['train', 'dev', 'test']:
+            matching_file = next(f for f in files if f'-ud-{split}.' in f)
+            paths[split] = os.path.join(dataset_dir, matching_file)
+        return paths
+    
+    @classmethod
+    def replace_chars(cls, text):
+        return cls.PATTERN.sub(lambda m: cls.CHAR_MAP[m.group(0)], text)
+    
+    # def get_split_as_text(self, split_path:str):
+    #     text = conll_importer.conll_to_text(file=split_path)
+    #     return text
+    
+    # def get_all_splits_as_text(self):
+    #     train_text = self.get_split_as_text(self.dataset_paths['train'])
+    #     test_text = self.get_split_as_text(self.dataset_paths['test'])
+    #     dev_text = self.get_split_as_text(self.dataset_paths['dev'])
+    #     return train_text, test_text, dev_text
+
+    def get_train_data_for_tagger(self):
+        train_texts = self.get_split_as_texts_list(self.dataset_paths['train'])
+        train_tags = self.get_all_tag_lists(train_texts)
+        return train_texts, train_tags
+
+    def get_test_data_for_tagger(self):
+        test_texts = self.get_split_as_texts_list(self.dataset_paths['test'])
+        test_tags = self.get_all_tag_lists(test_texts)
+        return test_texts, test_tags
+
+    def get_split_as_texts_list(self, split_path:str):
+        texts = conll_importer.conll_to_texts_list(file=split_path)
+        for text in texts:
+          text.tag_layer(['morph_analysis'])
+        return texts
+
+    def get_tag_lists(self, text: Text):
+        #Ühe Text objekti lausete märgendid listide listina
+        parsed_sents = []
+        for sent in text.sentences:
+            tags = []
+            
+            for misc in sent.conll_syntax.misc:
+                tag = 'O'
+                if misc and 'NE' in misc:
+                    ne_tag = misc['NE']
+                    if ne_tag in self.KNOWN_TAGS:
+                        tag = ne_tag
+                    elif tags and tags[-1] == 'B-ORG' and ne_tag == 'Org':
+                        tag = 'I-Org'
+                    elif tags and tags[-1] == 'B-PER' and ne_tag == 'Per':
+                        tag = 'I-Per'
+                    else:
+                        tag = self.CORRECTIONS.get(ne_tag, 'O')
+                tags.append(tag.upper())
+
+            parsed_sents.append(tags)
+        return parsed_sents
+
+    def get_all_tag_lists(self, texts):
+        tag_lists = []
+        for text in texts:
+            tag_lists.append(self.get_tag_lists(text))
+        return tag_lists
+
+    def preprocess(self, dataset_path: str):
+        # Sisend: andmestiku failitee sõnena
+        # Väljund: List, mis sisaldab parsitud lauseid
+        # Iga lause on paaride list kujul [(w0, t0), (w1, t1), ..., (wn, tn)], kus w tähistab sõna ja t sõnale vastavat märgendit.
+        dataset = conll_importer.conll_to_text(file=dataset_path)
+        parsed_sents = []
+        
+        for sent in dataset.sentences:
+            parsed_sent = []
+            for word, misc in zip(sent.words, sent.conll_syntax.misc):
+                tag = 'O'
+                if misc:
+                    if 'NE' in misc:
+                        if misc['NE'] in self.KNOWN_TAGS:
+                            tag = misc['NE']
+                        else:
+                            # Kaks üksikut juhtu, kus kahe elemendi pikkune nimeüksus oli märgendatud (_, Per), (_, Per) või (_, Org), (_, Org)
+                            if parsed_sent[-1][1] == 'B-ORG' and misc['NE'] == 'Org':
+                                tag = 'I-Org'
+                            if parsed_sent[-1][1] == 'B-PER' and misc['NE'] == 'Per':
+                                tag = 'I-Per'
+                            else:
+                                tag = self.CORRECTIONS[misc['NE']]
+                pair = (self.replace_chars(word.text), tag.upper())
+                parsed_sent.append(pair)
+            parsed_sents.append(parsed_sent)
+
+        return parsed_sents
+    
+    def split_to_token_and_tag(self, sents):
+        # Sisend: parsitud laused
+        # Väljund: Sõnastike list
+        # Sõnastik sisaldab kolme elementi: lause ID täisarvuna, märgendite list arvulisel kujul ning sõnade list
+        res = {}
+        for i, sent in enumerate(sents):
+            tags = [self.TAG2IDX[tag] for _, tag in sent]
+            words = [word for word, _ in sent]
+            res[i] = {
+                'id': i,
+                'tags': tags,
+                'tokens': words
+                }
+        return res
+    
+    def transform_set(self, data):
+        transformed = {
+            "id": [v["id"] for v in data.values()],
+            "tags": [v["tags"] for v in data.values()],
+            "tokens": [v["tokens"] for v in data.values()]
+            }
+        return Dataset.from_dict(transformed)
+    
+    def process_all(self):
+        train_sents = self.preprocess(self.dataset_paths['train'])
+        dev_sents = self.preprocess(self.dataset_paths['dev'])
+        test_sents = self.preprocess(self.dataset_paths['test'])
+        
+        train_ds = self.transform_set(self.split_to_token_and_tag(train_sents))
+        dev_ds = self.transform_set(self.split_to_token_and_tag(dev_sents))
+        test_ds = self.transform_set(self.split_to_token_and_tag(test_sents))
+        
+        return DatasetDict({'train': train_ds, 'dev': dev_ds, 'test': test_ds})
+    
+    def load_or_process(self):
+        return self.load_dataset_from_json() if self.from_json else self.process_all()
+    
+    def save_dataset_to_json(self, dataset):
+        os.makedirs(f'data/{self.dataset_name}', exist_ok=True)
+        for split_name, split_data in dataset.items():
+            with open(f'data/{self.dataset_name}/{split_name}.json', 'w', encoding='utf-8') as f:
+                json.dump([{'id': item['id'], 'tags': item['tags'], 'tokens': item['tokens']} for item in split_data], f, ensure_ascii=False, indent=2)
+    
+    def load_dataset_from_json(self):
+        dataset = DatasetDict()
+        for split_name in ['train', 'dev', 'test']:
+            with open(f'data/{self.dataset_name}/{split_name}.json', 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            dataset[split_name] = Dataset.from_dict({'id': [item['id'] for item in data], 'tags': [item['tags'] for item in data], 'tokens': [item['tokens'] for item in data]})
+        return dataset
+    
+    @staticmethod
+    def combine_datasetdicts(dataset1, dataset2):
+        combined = DatasetDict()
+        for split in ['train', 'dev', 'test']:
+            combined_dict = {'id': [], 'tags': [], 'tokens': []}
+            combined_dict['id'] = list(range(len(dataset1[split]) + len(dataset2[split])))
+            combined_dict['tags'] = dataset1[split]['tags'] + dataset2[split]['tags']
+            combined_dict['tokens'] = dataset1[split]['tokens'] + dataset2[split]['tokens']
+            combined[split] = Dataset.from_dict(combined_dict)
+        return combined
