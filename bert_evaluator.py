@@ -87,6 +87,6 @@ class BERTEvaluator:
             print(tag, nereval_by_tag[tag]['strict'])
 
     def evaluate_and_print(self, test_dataset, trainer):
-        results = self.evaluate(test_dataset, trainer)
+        results = self.evaluate_model(test_dataset, trainer)
         self.print_results(*results)
         return results
