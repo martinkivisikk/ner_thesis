@@ -52,7 +52,7 @@ class BERTTrainer:
             weight_decay=decay,
             eval_strategy="epoch",
             save_strategy="epoch",
-            save_total_limit=2,
+            save_total_limit=1,
             optim="adamw_torch",
             load_best_model_at_end=True,
             metric_for_best_model='f1',
