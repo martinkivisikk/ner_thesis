@@ -5,6 +5,9 @@ from estnltk.converters.conll import conll_importer
 from estnltk import Text
 from datasets import Dataset, DatasetDict
 
+#NB! Kui EstBERT viskab CUDA errorit, siis on arvatavasti andmetes öäü asemel àùò. Sel juhul word_id lähevad üle 50000, aga confis on sõnastiku max suurus 50k.
+# siis töötle andmed uuesti (from_json=False ja salvesta kasutades save_dataset_to_json)
+
 class DatasetProcessor:
     ALL_TAGS = ['O', 
             'B-EVE', 'I-EVE', 

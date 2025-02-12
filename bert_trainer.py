@@ -1,7 +1,9 @@
 from transformers import AutoModelForTokenClassification, TrainingArguments, Trainer, AutoConfig, EarlyStoppingCallback
 from itertools import product
 from datetime import datetime
+import time
 import torch
+import os
 
 class BERTTrainer:
     def __init__(self, model_name, idx2tag, tag2idx, evaluator):
@@ -23,6 +25,7 @@ class BERTTrainer:
                       lr=5e-5, scheduler='linear', beta1=0.9, beta2=0.99, 
                       epsilon=1e-6, decay=0.01, early_stop_patience=2, freeze=False, output_dir='./results'):
         
+        os.makedirs(output_dir, exist_ok=True)
         model = AutoModelForTokenClassification.from_pretrained(
             self.model_name, 
             config=self.config
@@ -49,6 +52,7 @@ class BERTTrainer:
             weight_decay=decay,
             eval_strategy="epoch",
             save_strategy="epoch",
+            save_total_limit=2,
             optim="adamw_torch",
             load_best_model_at_end=True,
             metric_for_best_model='f1',
@@ -74,8 +78,14 @@ class BERTTrainer:
             callbacks=[early_stopping_callback]
         )
 
+        start_time = time.time()
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Starting {self.model_name} training')
         trainer.train()
-
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {self.model_name} training finished')
+        print(f'Total training time: {elapsed_time:.2f} seconds ({elapsed_time/3600:.2f} hours)')
+        
         return model, trainer
 
     def grid_search(self, processor, tokenized_dataset, param_grid=None):
