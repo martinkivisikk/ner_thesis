@@ -66,7 +66,7 @@ class BERTEvaluator:
         return results, results_by_tag, result_indices, result_indices_by_tag
 
     def evaluate_model(self, test_dataset, trainer):
-        print('Evaluating on test set..')
+        print('Hindan testandmestikul..')
         predictions = self.get_predictions(test_dataset, trainer)
         seqeval_result = self.get_seqeval_results(*predictions)
         results, results_by_tag, result_indices, result_indices_by_tag = self.get_nervaluate_results(*predictions)

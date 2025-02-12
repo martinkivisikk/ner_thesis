@@ -79,12 +79,12 @@ class BERTTrainer:
         )
 
         start_time = time.time()
-        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Starting {self.model_name} training')
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Alustan {self.model_name} treenimist')
         trainer.train()
         end_time = time.time()
         elapsed_time = end_time - start_time
-        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {self.model_name} training finished')
-        print(f'Total training time: {elapsed_time:.2f} seconds ({elapsed_time/3600:.2f} hours)')
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {self.model_name} treenimine lõpetatud')
+        print(f'Kokku kulus: {elapsed_time:.2f} sekundit ({elapsed_time/3600:.2f} tundi)')
         
         return model, trainer
 

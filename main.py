@@ -20,7 +20,7 @@ def train_model(model_name, dataset_name, epochs=3, batch_size=16):
       processor = DatasetProcessor(dataset_name, from_json=True)
       dataset = processor.load_or_process()
     
-    print(f'{dataset_name.upper()} dataset loaded')
+    print(f'{dataset_name.upper()} andmestik laetud')
     bert_processor = BERTDataProcessor(model_name)
     evaluator = BERTEvaluator(all_tags=ALL_TAGS)
 
