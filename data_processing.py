@@ -119,7 +119,7 @@ class DatasetProcessor:
             tag_lists.append(self.get_tag_lists(text))
         return tag_lists
 
-    def preprocess(self, dataset_path: str):
+    def preprocess(self, dataset_path: str, use_lemmas=False):
         # Sisend: andmestiku failitee sõnena
         # Väljund: List, mis sisaldab parsitud lauseid
         # Iga lause on paaride list kujul [(w0, t0), (w1, t1), ..., (wn, tn)], kus w tähistab sõna ja t sõnale vastavat märgendit.
@@ -129,24 +129,33 @@ class DatasetProcessor:
         for sent in dataset.sentences:
             parsed_sent = []
             for word, misc in zip(sent.words, sent.conll_syntax.misc):
-                tag = 'O'
-                if misc:
-                    if 'NE' in misc:
-                        if misc['NE'] in self.KNOWN_TAGS:
-                            tag = misc['NE']
-                        else:
-                            # Kaks üksikut juhtu, kus kahe elemendi pikkune nimeüksus oli märgendatud (_, Per), (_, Per) või (_, Org), (_, Org)
-                            if parsed_sent[-1][1] == 'B-ORG' and misc['NE'] == 'Org':
-                                tag = 'I-Org'
-                            if parsed_sent[-1][1] == 'B-PER' and misc['NE'] == 'Per':
-                                tag = 'I-Per'
-                            else:
-                                tag = self.CORRECTIONS[misc['NE']]
-                pair = (self.replace_chars(word.text), tag.upper())
+                tag = self._get_tag(misc, parsed_sent)
+                if use_lemmas:
+                    w = word.conll_syntax.lemma
+                else:
+                    w = word.text
+                pair = (self.replace_chars(w), tag.upper())
                 parsed_sent.append(pair)
             parsed_sents.append(parsed_sent)
-
+                
         return parsed_sents
+    
+    def _get_tag(self, misc, parsed_sent):
+        if not misc or 'NE' not in misc:
+            return 'O'
+        ne_tag = misc['NE']
+        
+        if ne_tag in self.KNOWN_TAGS:
+            return ne_tag
+        
+        if parsed_sent:
+            last_tag = parsed_sent[-1][1]
+            if last_tag == 'B-ORG' and ne_tag == 'Org':
+                return 'I-Org'
+            if last_tag == 'B-PER' and ne_tag == 'Per':
+                return 'I-Per'
+            
+        return self.CORRECTIONS.get(ne_tag, 'O')
     
     def split_to_token_and_tag(self, sents):
         # Sisend: parsitud laused
@@ -171,10 +180,10 @@ class DatasetProcessor:
             }
         return Dataset.from_dict(transformed)
     
-    def process_all(self):
-        train_sents = self.preprocess(self.dataset_paths['train'])
-        dev_sents = self.preprocess(self.dataset_paths['dev'])
-        test_sents = self.preprocess(self.dataset_paths['test'])
+    def process_all(self, use_lemmas=False):
+        train_sents = self.preprocess(self.dataset_paths['train'], use_lemmas)
+        dev_sents = self.preprocess(self.dataset_paths['dev'], use_lemmas)
+        test_sents = self.preprocess(self.dataset_paths['test'], use_lemmas)
         
         train_ds = self.transform_set(self.split_to_token_and_tag(train_sents))
         dev_ds = self.transform_set(self.split_to_token_and_tag(dev_sents))
@@ -182,8 +191,8 @@ class DatasetProcessor:
         
         return DatasetDict({'train': train_ds, 'dev': dev_ds, 'test': test_ds})
     
-    def load_or_process(self):
-        return self.load_dataset_from_json() if self.from_json else self.process_all()
+    def load_or_process(self, use_lemmas=False):
+        return self.load_dataset_from_json() if self.from_json else self.process_all(use_lemmas)
     
     def save_dataset_to_json(self, dataset):
         os.makedirs(f'data/{self.dataset_name}', exist_ok=True)
