@@ -47,6 +47,11 @@ class DatasetProcessor:
         self.dataset_name = dataset_name
         self.dataset_paths = self.get_dataset_paths()
         self.from_json = from_json
+        self.dataset = self.load_or_process()
+        if self.dataset:
+            self.train = self.dataset['train']
+            self.dev = self.dataset['dev']
+            self.test = self.dataset['test']
     
     def get_dataset_paths(self):
         # Sisend: andmestiku nimi sõnena (ewt/edt)
@@ -218,3 +223,38 @@ class DatasetProcessor:
             combined_dict['tokens'] = dataset1[split]['tokens'] + dataset2[split]['tokens']
             combined[split] = Dataset.from_dict(combined_dict)
         return combined
+    
+    def get_split_stats(self, split):
+        stats = {
+            'sentences': 0,
+            'tokens': 0
+        }
+        for sentence in split:
+            stats['sentences'] += 1
+            for tag, word in zip(sentence['tags'], sentence['tokens']):
+                stats['tokens'] += 1
+                actual_tag = self.IDX2TAG[tag]
+                tag_prefix = actual_tag[:2] # B-, I-, O
+                tag_suffix = actual_tag[2:] 
+                if tag_prefix == 'B-':
+                    stats[tag_suffix] = stats.get(tag_suffix, 0) + 1
+        
+        return stats
+    
+    def get_all_stats(self):
+        train_stats = self.get_split_stats(self.train)
+        test_stats = self.get_split_stats(self.test)
+        dev_stats = self.get_split_stats(self.dev)
+        
+        total_stats = {}
+        
+        for stats in [train_stats, test_stats, dev_stats]:
+            for key, value in stats.items():
+                total_stats[key] = total_stats.get(key, 0) + value
+        
+        return {
+            "train": train_stats,
+            "test": test_stats,
+            "dev": dev_stats,
+            "total": total_stats
+        }
