@@ -9,6 +9,7 @@ from datasets import Dataset, DatasetDict
 # siis töötle andmed uuesti (from_json=False ja salvesta kasutades save_dataset_to_json)
 
 class DatasetProcessor:
+    # potentsiaalne veakoht, kasuta sort ja tee andmestik ümber
     ALL_TAGS = ['O', 
             'B-EVE', 'I-EVE', 
             'B-GEP', 'I-GEP', 
