@@ -19,6 +19,7 @@ class DatasetProcessor:
             'B-PER', 'I-PER', 
             'B-PROD', 'I-PROD', 
             'B-UNK', 'I-UNK']
+    ALL_TAGS.sort(reverse=True)
     TAG2IDX = {tag: idx for idx, tag in enumerate(ALL_TAGS)}
     IDX2TAG = {idx: tag for idx, tag in enumerate(ALL_TAGS)}
 

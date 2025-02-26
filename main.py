@@ -1,7 +1,7 @@
-from data_processing import DatasetProcessor
-from bert_data_processing import BERTDataProcessor
-from bert_evaluator import BERTEvaluator
-from bert_trainer import BERTTrainer
+from modules.data_processing import DatasetProcessor
+from modules.bert_data_processing import BERTDataProcessor
+from modules.bert_evaluator import BERTEvaluator
+from modules.bert_trainer import BERTTrainer
 ALL_TAGS = DatasetProcessor.ALL_TAGS
 TAG2IDX = DatasetProcessor.TAG2IDX
 IDX2TAG = DatasetProcessor.IDX2TAG
