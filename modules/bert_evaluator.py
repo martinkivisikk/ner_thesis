@@ -9,6 +9,8 @@ class BERTEvaluator:
         self.seqeval = evaluate.load("seqeval")
 
     def compute_metrics(self, p):
+        # Kasutatakse treenimisel, f-skoor sõnapõhiselt seqeval järgi, infoks märgendipõhised tulemused nervaluate abil
+        
         predictions, labels = p
         predictions = np.argmax(predictions, axis=2)
 
@@ -42,6 +44,8 @@ class BERTEvaluator:
 
     
     def get_predictions(self, dataset, trainer):
+        # Kasutab treenimisel kasutatud 'trainer' objekti, et teha andmestikul ennustused
+        # Tagastab ennustuste ja tegelike märgendite listid
         predictions, labels, _ = trainer.predict(dataset)
         predictions = np.argmax(predictions, axis=2)
 
@@ -57,8 +61,8 @@ class BERTEvaluator:
         return true_predictions, true_labels
 
     def get_seqeval_results(self, predictions, actual):
-        results = self.seqeval.compute(predictions=predictions, references=actual)
-        return results
+        # Evaluate/Seqeval abil sõnapõhine hindamine
+        return self.seqeval.compute(predictions=predictions, references=actual)
 
     def get_nervaluate_results(self, predictions, actual):
         evaluator = Evaluator(actual, predictions, tags=self.ner_tags, loader="list")

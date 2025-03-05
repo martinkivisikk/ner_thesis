@@ -33,7 +33,8 @@ class BERTTrainer:
         
         if torch.cuda.is_available():
             model.cuda()
-            
+
+        # Mingitel juhtudel võib aidata transformerikihtide "külmutamine" ehk treenimisel nende kaale ei muudeta, aga seda varianti ei ole põhjalikult uurinud 
         if freeze:
             for param in model.bert.embeddings.parameters():
                 param.requires_grad = False
@@ -62,6 +63,7 @@ class BERTTrainer:
             fp16=True
         )
 
+        # Treenimise peatamine, kui viimase kahe epohhiga pole F-skoor paranenud
         early_stopping_callback = EarlyStoppingCallback(
             early_stopping_patience=early_stop_patience,
             early_stopping_threshold=0.0001
@@ -93,10 +95,21 @@ class BERTTrainer:
         best_f1 = 0
         best_model = None
         best_params = None
+        
+        # Param_grid sisendiks sõnastikuna, eeldab, et võtmed ühtivad parameetrite nimedega. Siit kõik kombinatsioonid, mida treenida.
+        # param_grid näide: param_grid = {
+        #     'learning_rate': [3e-5, 5e-5],
+        #     'batch_size': [16, 32],
+        #     'num_train_epochs': [3],
+        #     'weight_decay': [0.01],
+        #     'adam_beta1': [0.9],
+        #     'adam_beta2': [0.99],
+        #     'adam_epsilon': [1e-6],
+        #     'lr_scheduler_type': ['linear', 'polynomial']
+        # }
 
         if param_grid:
-            param_combinations = [dict(zip(param_grid.keys(), v))
-                                for v in product(*param_grid.values())]
+            param_combinations = [dict(zip(param_grid.keys(), v)) for v in product(*param_grid.values())]
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 

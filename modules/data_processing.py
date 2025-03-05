@@ -114,33 +114,16 @@ class DatasetProcessor:
     
     def split_to_token_and_tag(self, sents):
         # Sisend: parsitud laused
-        # Väljund: 
+        # Väljund: sõnastik, mis sisaldab ID'de listi, kahte listi lausete sõnade ja märgendite jaoks, iga listi element on omakorda list, mis sisaldab sõnu/märgendeid
         return {
             "id": list(range(len(sents))),
             "tags": [[self.TAG2IDX[tag] for _, tag in sent] for sent in sents],
             "tokens": [[word for word, _ in sent] for sent in sents]
         }
-        # res = {}
-        # for i, sent in enumerate(sents):
-        #     tags = [self.TAG2IDX[tag] for _, tag in sent]
-        #     words = [word for word, _ in sent]
-        #     res[i] = {
-        #         'id': i,
-        #         'tags': tags,
-        #         'tokens': words
-        #         }
-        # return res
-    
-    # def transform_set(self, data):
         
-    #     transformed = {
-    #         "id": [v["id"] for v in data.values()],
-    #         "tags": [v["tags"] for v in data.values()],
-    #         "tokens": [v["tokens"] for v in data.values()]
-    #         }
-    #     return Dataset.from_dict(transformed)
-    
     def process_all(self, use_lemmas=False):
+        # Töötleb train/dev/test laused
+        # Tagastab DatasetDict objekti, mis sisaldab train/dev/test Dataset objekte
         train_sents = self.preprocess(self.dataset_paths['train'], use_lemmas)
         dev_sents = self.preprocess(self.dataset_paths['dev'], use_lemmas)
         test_sents = self.preprocess(self.dataset_paths['test'], use_lemmas)
@@ -150,12 +133,7 @@ class DatasetProcessor:
             'dev': Dataset.from_dict(self.split_to_token_and_tag(dev_sents)),
             'test': Dataset.from_dict(self.split_to_token_and_tag(test_sents))
         })
-        # train_ds = self.transform_set(self.split_to_token_and_tag(train_sents))
-        # dev_ds = self.transform_set(self.split_to_token_and_tag(dev_sents))
-        # test_ds = self.transform_set(self.split_to_token_and_tag(test_sents))
         
-        # return DatasetDict({'train': train_ds, 'dev': dev_ds, 'test': test_ds})
-    
     def load_or_process(self, use_lemmas=False):
         return self.load_dataset_from_json() if self.from_json else self.process_all(use_lemmas)
     
