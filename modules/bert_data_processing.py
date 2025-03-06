@@ -36,8 +36,8 @@ class BERTDataProcessor:
         tokenized_inputs["labels"] = labels
         return tokenized_inputs
 
-    def tokenize_dataset(self, dataset):
-        return dataset.map(self.tokenize_and_align_labels)
+    def tokenize_dataset(self, dataset, label_all=True):
+        return dataset.map(self.tokenize_and_align_labels, label_all)
 
     def get_data_collator(self):
         return self.data_collator
