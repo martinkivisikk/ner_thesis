@@ -1,6 +1,9 @@
 import numpy as np
 from nervaluate import Evaluator
 import evaluate
+import os
+import json
+import datetime
 
 class BERTEvaluator:
     def __init__(self, all_tags, ner_tags=['EVE', 'GEP', 'LOC', 'MUU', 'ORG', 'PER', 'PROD', 'UNK']):
@@ -92,6 +95,35 @@ class BERTEvaluator:
             print(tag, nereval_by_tag[tag]['strict'])
 
     def evaluate_and_print(self, test_dataset, trainer):
-        results = self.evaluate_model(test_dataset, trainer)
-        self.print_results(*results)
-        return results
+        seqeval_result, nervaluate_result, nervaluate_by_tag = self.evaluate_model(test_dataset, trainer)
+        self.print_results(seqeval_result, nervaluate_result, nervaluate_by_tag)
+        return seqeval_result, nervaluate_result, nervaluate_by_tag
+    
+    def evaluation_to_json(self, nervaluate_strict_overall, nervaluate_by_tag, model_name, trained_on, evaluated_on, epochs=None):
+        results = {}
+        results["strict"] = nervaluate_strict_overall
+        for key in nervaluate_by_tag:
+            results[key] = nervaluate_by_tag[key]['strict']
+        
+        formatted_output = {
+            "model": model_name,
+            "trained_on": trained_on,
+            "epochs": epochs,
+            "evaluated_on": evaluated_on,
+            "results": results
+        }
+        
+        if trained_on:
+            folder_name = f"results/{model_name}_{trained_on}"
+        else:
+            folder_name = f"results/{model_name}"
+
+        timestamp = datetime.datetime.now().strftime("%Y-%d-%m_%H-%M")
+        file_name = f"eval_on_{evaluated_on}_test_{timestamp}.json"
+
+        os.makedirs(folder_name, exist_ok=True)
+        file_path = os.path.join(folder_name, file_name)
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(formatted_output, f, indent=4)
+
+        print(f"Salvestasin: {file_path}")
