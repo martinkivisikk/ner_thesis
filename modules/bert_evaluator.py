@@ -13,7 +13,7 @@ class BERTEvaluator:
 
     def compute_metrics(self, p):
         # Kasutatakse treenimisel, f-skoor sõnapõhiselt seqeval järgi, infoks märgendipõhised tulemused nervaluate abil
-        
+
         predictions, labels = p
         predictions = np.argmax(predictions, axis=2)
 
@@ -45,7 +45,7 @@ class BERTEvaluator:
 
         return metrics
 
-    
+
     def get_predictions(self, dataset, trainer):
         # Kasutab treenimisel kasutatud 'trainer' objekti, et teha andmestikul ennustused
         # Tagastab ennustuste ja tegelike märgendite listid
@@ -98,13 +98,13 @@ class BERTEvaluator:
         seqeval_result, nervaluate_result, nervaluate_by_tag = self.evaluate_model(test_dataset, trainer)
         self.print_results(seqeval_result, nervaluate_result, nervaluate_by_tag)
         return seqeval_result, nervaluate_result, nervaluate_by_tag
-    
+
     def evaluation_to_json(self, nervaluate_strict_overall, nervaluate_by_tag, model_name, trained_on, evaluated_on, epochs=None):
         results = {}
         results["strict"] = nervaluate_strict_overall
         for key in nervaluate_by_tag:
             results[key] = nervaluate_by_tag[key]['strict']
-        
+
         formatted_output = {
             "model": model_name,
             "trained_on": trained_on,
@@ -112,7 +112,7 @@ class BERTEvaluator:
             "evaluated_on": evaluated_on,
             "results": results
         }
-        
+
         if trained_on:
             folder_name = f"results/{model_name}_{trained_on}"
         else:
@@ -127,3 +127,25 @@ class BERTEvaluator:
             json.dump(formatted_output, f, indent=4)
 
         print(f"Salvestasin: {file_path}")
+
+    def result_to_tsv(self, dataset, model_name, dataset_name):
+        folder_name = f"results/{model_name}"
+        timestamp = datetime.datetime.now().strftime("%Y-%d-%m_%H-%M")
+        file_name = f"predictions_on_{dataset_name}_test_{timestamp}.tsv"
+        os.makedirs(folder_name, exist_ok=True)
+        file_path = os.path.join(folder_name, file_name)
+
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write("sona\tgold\tpred\n")
+            #print('sona\tgold\tpred')
+            for item in dataset:
+                sent_tokens = item['tokens']
+                preds = item['predicted_tags']
+                actual_labels = item['gold_tags']
+                assert len(sent_tokens) == len(preds)
+                assert len(preds) == len(actual_labels)
+                for w, actual_tag, predicted_tag in zip(sent_tokens, actual_labels, preds):
+                    f.write(f'{w}\t{actual_tag}\t{predicted_tag}\n')
+                    #print(f'{w}\t{actual_tag}\t{predicted_tag}')
+                f.write("\n")
+                    #print()
