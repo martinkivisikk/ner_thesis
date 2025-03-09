@@ -13,13 +13,13 @@ def train_model(model_name, dataset_name, epochs=3, batch_size=16):
     if dataset_name.lower() == 'combined':
       ewt_processor = DatasetProcessor('ewt', from_json=True)
       edt_processor = DatasetProcessor('edt', from_json=True)
-      ewt_dataset = ewt_processor.load_or_process()
-      edt_dataset = edt_processor.load_or_process()
+      ewt_dataset = DatasetProcessor.tag_to_id(ewt_processor.dataset, TAG2IDX)
+      edt_dataset = DatasetProcessor.tag_to_id(edt_processor.dataset, TAG2IDX)
       dataset = DatasetProcessor.combine_datasetdicts(ewt_dataset, edt_dataset)
     elif dataset_name.lower() in ['ewt', 'edt']:
       processor = DatasetProcessor(dataset_name, from_json=True)
-      dataset = processor.load_or_process()
-    
+      dataset = DatasetProcessor.tag_to_id(processor.dataset, TAG2IDX)
+
     print(f'{dataset_name.upper()} andmestik laetud')
     bert_processor = BERTDataProcessor(model_name)
     evaluator = BERTEvaluator(all_tags=ALL_TAGS)
