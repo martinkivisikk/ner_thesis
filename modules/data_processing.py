@@ -173,7 +173,7 @@ class DatasetProcessor:
         for split in mapped_dataset:
             mapped_dataset[split] = mapped_dataset[split].map(_map_tags)
 
-        return mapped_dataset
+        return DatasetDict(mapped_dataset)
 
     def get_split_stats(self, split):
         stats = {
