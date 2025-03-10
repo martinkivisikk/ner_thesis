@@ -1,9 +1,10 @@
 {
     "model": "EstBERT",
     "trained_on": "EWT",
+    "epochs": 3,
     "evaluated_on": "EWT",
     "results": {
-        "Strict": {
+        "strict": {
             "correct": 1153,
             "incorrect": 421,
             "partial": 0,
