@@ -10,6 +10,7 @@ from datasets import Dataset, DatasetDict
 
 class DatasetProcessor:
     # peab jälgima, et all_tags, idx2tag ja mudeli.config.id2label/label2id ja andmestik on kooskõlas
+    # hardcoded all_tags on paras jama tegelikult, pigem kasutad
     ALL_TAGS = ['O',
             'B-EVE', 'I-EVE',
             'B-GEP', 'I-GEP',
@@ -19,6 +20,7 @@ class DatasetProcessor:
             'B-PER', 'I-PER',
             'B-PROD', 'I-PROD',
             'B-UNK', 'I-UNK']
+
     ALL_TAGS.sort(reverse=True)
     TAG2IDX = {tag: idx for idx, tag in enumerate(ALL_TAGS)}
     IDX2TAG = {idx: tag for idx, tag in enumerate(ALL_TAGS)}
@@ -210,50 +212,3 @@ class DatasetProcessor:
             "dev": dev_stats,
             "total": total_stats
         }
-
-    # Kasutamata funktsioonid (EstNLTK nertaggeri jaoks, aga ei kasuta)
-
-    def get_train_data_for_tagger(self):
-        train_texts = self.get_split_as_texts_list(self.dataset_paths['train'])
-        train_tags = self.get_all_tag_lists(train_texts)
-        return train_texts, train_tags
-
-    def get_test_data_for_tagger(self):
-        test_texts = self.get_split_as_texts_list(self.dataset_paths['test'])
-        test_tags = self.get_all_tag_lists(test_texts)
-        return test_texts, test_tags
-
-    def get_split_as_texts_list(self, split_path:str):
-        texts = conll_importer.conll_to_texts_list(file=split_path)
-        for text in texts:
-          text.tag_layer(['morph_analysis'])
-        return texts
-
-    def get_tag_lists(self, text: Text):
-        #Ühe Text objekti lausete märgendid listide listina
-        parsed_sents = []
-        for sent in text.sentences:
-            tags = []
-
-            for misc in sent.conll_syntax.misc:
-                tag = 'O'
-                if misc and 'NE' in misc:
-                    ne_tag = misc['NE']
-                    if ne_tag in self.KNOWN_TAGS:
-                        tag = ne_tag
-                    elif tags and tags[-1] == 'B-ORG' and ne_tag == 'Org':
-                        tag = 'I-Org'
-                    elif tags and tags[-1] == 'B-PER' and ne_tag == 'Per':
-                        tag = 'I-Per'
-                    else:
-                        tag = self.CORRECTIONS.get(ne_tag, 'O')
-                tags.append(tag.upper())
-
-            parsed_sents.append(tags)
-        return parsed_sents
-
-    def get_all_tag_lists(self, texts):
-        tag_lists = []
-        for text in texts:
-            tag_lists.append(self.get_tag_lists(text))
-        return tag_lists

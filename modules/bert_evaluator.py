@@ -127,25 +127,3 @@ class BERTEvaluator:
             json.dump(formatted_output, f, indent=4)
 
         print(f"Salvestasin: {file_path}")
-
-    def result_to_tsv(self, dataset, model_name, dataset_name):
-        folder_name = f"results/{model_name}"
-        timestamp = datetime.datetime.now().strftime("%Y-%d-%m_%H-%M")
-        file_name = f"predictions_on_{dataset_name}_test_{timestamp}.tsv"
-        os.makedirs(folder_name, exist_ok=True)
-        file_path = os.path.join(folder_name, file_name)
-
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write("sona\tgold\tpred\n")
-            #print('sona\tgold\tpred')
-            for item in dataset:
-                sent_tokens = item['tokens']
-                preds = item['predicted_tags']
-                actual_labels = item['gold_tags']
-                assert len(sent_tokens) == len(preds)
-                assert len(preds) == len(actual_labels)
-                for w, actual_tag, predicted_tag in zip(sent_tokens, actual_labels, preds):
-                    f.write(f'{w}\t{actual_tag}\t{predicted_tag}\n')
-                    #print(f'{w}\t{actual_tag}\t{predicted_tag}')
-                f.write("\n")
-                    #print()
