@@ -1,0 +1,92 @@
+{
+    "model": "EstBERT_NER_V2",
+    "trained_on": null,
+    "epochs": null,
+    "evaluated_on": "EDT",
+    "results": {
+        "strict": {
+            "correct": 1524,
+            "incorrect": 611,
+            "partial": 0,
+            "missed": 288,
+            "spurious": 246,
+            "possible": 2423,
+            "actual": 2381,
+            "precision": 0.6400671986560269,
+            "recall": 0.6289723483285183,
+            "f1": 0.6344712739383847
+        },
+        "LOC": {
+            "correct": 65,
+            "incorrect": 194,
+            "partial": 0,
+            "missed": 34,
+            "spurious": 6,
+            "possible": 293,
+            "actual": 265,
+            "precision": 0.24528301886792453,
+            "recall": 0.22184300341296928,
+            "f1": 0.2329749103942652
+        },
+        "ORG": {
+            "correct": 206,
+            "incorrect": 105,
+            "partial": 0,
+            "missed": 54,
+            "spurious": 105,
+            "possible": 365,
+            "actual": 416,
+            "precision": 0.4951923076923077,
+            "recall": 0.5643835616438356,
+            "f1": 0.5275288092189502
+        },
+        "EVENT": {
+            "correct": 7,
+            "incorrect": 19,
+            "partial": 0,
+            "missed": 12,
+            "spurious": 2,
+            "possible": 38,
+            "actual": 28,
+            "precision": 0.25,
+            "recall": 0.18421052631578946,
+            "f1": 0.2121212121212121
+        },
+        "PROD": {
+            "correct": 61,
+            "incorrect": 173,
+            "partial": 0,
+            "missed": 75,
+            "spurious": 29,
+            "possible": 309,
+            "actual": 263,
+            "precision": 0.23193916349809887,
+            "recall": 0.19741100323624594,
+            "f1": 0.2132867132867133
+        },
+        "GPE": {
+            "correct": 243,
+            "incorrect": 29,
+            "partial": 0,
+            "missed": 29,
+            "spurious": 49,
+            "possible": 301,
+            "actual": 321,
+            "precision": 0.7570093457943925,
+            "recall": 0.8073089700996677,
+            "f1": 0.7813504823151124
+        },
+        "PER": {
+            "correct": 942,
+            "incorrect": 91,
+            "partial": 0,
+            "missed": 84,
+            "spurious": 55,
+            "possible": 1117,
+            "actual": 1088,
+            "precision": 0.8658088235294118,
+            "recall": 0.8433303491495077,
+            "f1": 0.854421768707483
+        }
+    }
+}

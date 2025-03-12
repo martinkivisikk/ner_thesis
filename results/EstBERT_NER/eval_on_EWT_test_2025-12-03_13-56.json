@@ -1,0 +1,56 @@
+{
+    "model": "EstBERT_NER",
+    "trained_on": null,
+    "epochs": null,
+    "evaluated_on": "EWT",
+    "results": {
+        "strict": {
+            "correct": 288,
+            "incorrect": 43,
+            "partial": 0,
+            "missed": 220,
+            "spurious": 91,
+            "possible": 551,
+            "actual": 422,
+            "precision": 0.6824644549763034,
+            "recall": 0.5226860254083484,
+            "f1": 0.591983556012333
+        },
+        "LOC": {
+            "correct": 14,
+            "incorrect": 5,
+            "partial": 0,
+            "missed": 9,
+            "spurious": 42,
+            "possible": 28,
+            "actual": 61,
+            "precision": 0.22950819672131148,
+            "recall": 0.5,
+            "f1": 0.3146067415730337
+        },
+        "ORG": {
+            "correct": 50,
+            "incorrect": 21,
+            "partial": 0,
+            "missed": 21,
+            "spurious": 27,
+            "possible": 92,
+            "actual": 98,
+            "precision": 0.5102040816326531,
+            "recall": 0.5434782608695652,
+            "f1": 0.5263157894736842
+        },
+        "PER": {
+            "correct": 224,
+            "incorrect": 17,
+            "partial": 0,
+            "missed": 190,
+            "spurious": 22,
+            "possible": 431,
+            "actual": 263,
+            "precision": 0.8517110266159695,
+            "recall": 0.5197215777262181,
+            "f1": 0.6455331412103746
+        }
+    }
+}
