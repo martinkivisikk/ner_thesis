@@ -11,7 +11,7 @@ class BERTTrainer:
         self.idx2tag = idx2tag
         self.tag2idx = tag2idx
         self.evaluator = evaluator
-        
+
         self.config = AutoConfig.from_pretrained(
             model_name,
             id2label=idx2tag,
@@ -21,20 +21,20 @@ class BERTTrainer:
             output_attentions=False,
         )
 
-    def finetune_model(self, processor, tokenized_dataset, epochs=3, batch_size=16, 
-                      lr=5e-5, scheduler='linear', beta1=0.9, beta2=0.99, 
-                      epsilon=1e-6, decay=0.01, early_stop_patience=2, freeze=False, output_dir='./results'):
-        
+    def finetune_model(self, processor, tokenized_dataset, epochs=3, batch_size=16,
+                      lr=5e-5, early_stop_patience=2, freeze=False, output_dir='./results'):
+        # scheduler='linear', beta1=0.9, beta2=0.99, epsilon=1e-6, decay=0.01,
+
         os.makedirs(output_dir, exist_ok=True)
         model = AutoModelForTokenClassification.from_pretrained(
-            self.model_name, 
+            self.model_name,
             config=self.config
         )
-        
+
         if torch.cuda.is_available():
             model.cuda()
 
-        # Mingitel juhtudel võib aidata transformerikihtide "külmutamine" ehk treenimisel nende kaale ei muudeta, aga seda varianti ei ole põhjalikult uurinud 
+        # Mingitel juhtudel võib aidata transformerikihtide "külmutamine" ehk treenimisel nende kaale ei muudeta, aga seda varianti ei ole põhjalikult uurinud
         if freeze:
             for param in model.bert.embeddings.parameters():
                 param.requires_grad = False
@@ -46,20 +46,20 @@ class BERTTrainer:
             report_to='none',
             output_dir=output_dir,
             learning_rate=lr,
-            lr_scheduler_type=scheduler,
+            #lr_scheduler_type=scheduler,
             per_device_train_batch_size=batch_size,
             per_device_eval_batch_size=batch_size,
             num_train_epochs=epochs,
-            weight_decay=decay,
+            #weight_decay=decay,
             eval_strategy="epoch",
             save_strategy="epoch",
             save_total_limit=1,
             optim="adamw_torch",
             load_best_model_at_end=True,
             metric_for_best_model='f1',
-            adam_beta1=beta1,
-            adam_beta2=beta2,
-            adam_epsilon=epsilon,
+            #adam_beta1=beta1,
+            #adam_beta2=beta2,
+            #adam_epsilon=epsilon,
             fp16=True
         )
 
@@ -87,7 +87,7 @@ class BERTTrainer:
         elapsed_time = end_time - start_time
         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {self.model_name} treenimine lõpetatud')
         print(f'Kokku kulus: {elapsed_time:.2f} sekundit ({elapsed_time/3600:.2f} tundi)')
-        
+
         return model, trainer
 
     def grid_search(self, processor, tokenized_dataset, param_grid=None):
@@ -95,7 +95,7 @@ class BERTTrainer:
         best_f1 = 0
         best_model = None
         best_params = None
-        
+
         # Param_grid sisendiks sõnastikuna, eeldab, et võtmed ühtivad parameetrite nimedega. Siit kõik kombinatsioonid, mida treenida.
         # param_grid näide: param_grid = {
         #     'learning_rate': [3e-5, 5e-5],
@@ -119,9 +119,9 @@ class BERTTrainer:
 
             try:
                 model = AutoModelForTokenClassification.from_pretrained(
-                    self.model_name, 
-                    num_labels=len(self.idx2tag), 
-                    id2label=self.idx2tag, 
+                    self.model_name,
+                    num_labels=len(self.idx2tag),
+                    id2label=self.idx2tag,
                     label2id=self.tag2idx
                 )
 
