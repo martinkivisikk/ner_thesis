@@ -75,14 +75,14 @@ class BERTEvaluator:
     def evaluate_model(self, test_dataset, trainer):
         print('Hindan testandmestikul..')
         predictions = self.get_predictions(test_dataset, trainer)
-        seqeval_result = self.get_seqeval_results(*predictions)
+        #seqeval_result = self.get_seqeval_results(*predictions)
         results, results_by_tag, result_indices, result_indices_by_tag = self.get_nervaluate_results(*predictions)
-        return seqeval_result, results, results_by_tag
+        return results, results_by_tag
 
-    def print_results(self, seqeval_result, nereval_result, nereval_by_tag):
-        print("Seqeval tulemused")
-        for key in seqeval_result:
-            print(key, seqeval_result[key])
+    def print_results(self, nereval_result, nereval_by_tag):
+        # print("Seqeval tulemused")
+        # for key in seqeval_result:
+        #     print(key, seqeval_result[key])
 
         print()
         print("Nervaluate tulemused")
@@ -95,9 +95,9 @@ class BERTEvaluator:
             print(tag, nereval_by_tag[tag]['strict'])
 
     def evaluate_and_print(self, test_dataset, trainer):
-        seqeval_result, nervaluate_result, nervaluate_by_tag = self.evaluate_model(test_dataset, trainer)
-        self.print_results(seqeval_result, nervaluate_result, nervaluate_by_tag)
-        return seqeval_result, nervaluate_result, nervaluate_by_tag
+        nervaluate_result, nervaluate_by_tag = self.evaluate_model(test_dataset, trainer)
+        self.print_results(nervaluate_result, nervaluate_by_tag)
+        return nervaluate_result, nervaluate_by_tag
 
     def evaluation_to_json(self, nervaluate_strict_overall, nervaluate_by_tag, model_name, trained_on, evaluated_on, epochs=None):
         results = {}
