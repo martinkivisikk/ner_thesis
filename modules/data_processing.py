@@ -49,8 +49,8 @@ class DatasetProcessor:
 
     def __init__(self, dataset_name: str, from_json: bool = True):
         self.dataset_name = dataset_name
-        self.dataset_paths = self.get_dataset_paths()
         self.from_json = from_json
+        self.dataset_paths = self.get_dataset_paths()
         self.dataset = self.load_or_process()
         if self.dataset:
             self.train = self.dataset['train']
@@ -59,16 +59,22 @@ class DatasetProcessor:
 
     def get_dataset_paths(self):
         # Sisend: andmestiku nimi sõnena (ewt/edt)
-        # Väljund: sõnastik, mis sisaldab train/dev/test failiteid
+        # Väljund: sõnastik, mis sisaldab CoNLL-U failide train/dev/test failiteid
+        if not self.from_json:
+            dataset_dir = os.path.join('data', self.dataset_name)
+            files = os.listdir(dataset_dir)
+            if self._data_exists(files):
+                paths = {}
+                for split in ['train', 'dev', 'test']:
+                    matching_file = next(f for f in files if f'-ud-{split}.' in f)
+                    paths[split] = os.path.join(dataset_dir, matching_file)
+                return paths
+            print(f'Did not find {self.dataset_name} CoNLL-U files in {dataset_dir}: {files}')
+        return None
 
-        dataset_dir = os.path.join('data', self.dataset_name)
-        files = os.listdir(dataset_dir)
-        paths = {}
-        for split in ['train', 'dev', 'test']:
-            matching_file = next(f for f in files if f'-ud-{split}.' in f)
-            paths[split] = os.path.join(dataset_dir, matching_file)
-        return paths
-
+    def _data_exists(self, files_list):
+        return any('-ud-' in name.lower() for name in files_list)
+    
     @classmethod
     def replace_chars(cls, text):
         # Asendab àùò äüo
@@ -127,15 +133,19 @@ class DatasetProcessor:
     def process_all(self, use_lemmas=False):
         # Töötleb train/dev/test laused
         # Tagastab DatasetDict objekti, mis sisaldab train/dev/test Dataset objekte
-        train_sents = self.preprocess(self.dataset_paths['train'], use_lemmas)
-        dev_sents = self.preprocess(self.dataset_paths['dev'], use_lemmas)
-        test_sents = self.preprocess(self.dataset_paths['test'], use_lemmas)
-
-        return DatasetDict({
-            'train': Dataset.from_dict(self.split_to_token_and_tag(train_sents)),
-            'dev': Dataset.from_dict(self.split_to_token_and_tag(dev_sents)),
-            'test': Dataset.from_dict(self.split_to_token_and_tag(test_sents))
-        })
+        if self.dataset_paths:
+            train_sents = self.preprocess(self.dataset_paths['train'], use_lemmas)
+            dev_sents = self.preprocess(self.dataset_paths['dev'], use_lemmas)
+            test_sents = self.preprocess(self.dataset_paths['test'], use_lemmas)
+    
+            return DatasetDict({
+                'train': Dataset.from_dict(self.split_to_token_and_tag(train_sents)),
+                'dev': Dataset.from_dict(self.split_to_token_and_tag(dev_sents)),
+                'test': Dataset.from_dict(self.split_to_token_and_tag(test_sents))
+            })
+        
+        print(f"{self.dataset_name} dataset wasn't loaded")
+        return None
 
     def load_or_process(self, use_lemmas=False):
         return self.load_dataset_from_json() if self.from_json else self.process_all(use_lemmas)
