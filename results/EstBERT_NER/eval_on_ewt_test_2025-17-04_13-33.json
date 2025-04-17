@@ -1,8 +1,8 @@
 {
     "model": "EstBERT_NER",
-    "trained_on": null,
+    "trained_on": "EstNER",
     "epochs": null,
-    "evaluated_on": "EWT",
+    "evaluated_on": "ewt",
     "results": {
         "strict": {
             "correct": 288,
@@ -15,18 +15,6 @@
             "precision": 0.6824644549763034,
             "recall": 0.5226860254083484,
             "f1": 0.591983556012333
-        },
-        "LOC": {
-            "correct": 14,
-            "incorrect": 5,
-            "partial": 0,
-            "missed": 9,
-            "spurious": 42,
-            "possible": 28,
-            "actual": 61,
-            "precision": 0.22950819672131148,
-            "recall": 0.5,
-            "f1": 0.3146067415730337
         },
         "ORG": {
             "correct": 50,
@@ -51,6 +39,18 @@
             "precision": 0.8517110266159695,
             "recall": 0.5197215777262181,
             "f1": 0.6455331412103746
+        },
+        "LOC": {
+            "correct": 14,
+            "incorrect": 5,
+            "partial": 0,
+            "missed": 9,
+            "spurious": 42,
+            "possible": 28,
+            "actual": 61,
+            "precision": 0.22950819672131148,
+            "recall": 0.5,
+            "f1": 0.3146067415730337
         }
     }
 }
