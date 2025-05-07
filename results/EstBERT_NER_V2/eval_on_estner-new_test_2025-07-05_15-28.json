@@ -1,0 +1,152 @@
+{
+    "model": "EstBERT_NER_V2",
+    "trained_on": "EstNER_V1+EstNER_new",
+    "epochs": null,
+    "evaluated_on": "estner-new",
+    "results": {
+        "strict": {
+            "correct": 728,
+            "incorrect": 146,
+            "partial": 0,
+            "missed": 125,
+            "spurious": 82,
+            "possible": 999,
+            "actual": 956,
+            "precision": 0.7615062761506276,
+            "recall": 0.7287287287287287,
+            "f1": 0.7447570332480818
+        },
+        "MONEY": {
+            "correct": 4,
+            "incorrect": 1,
+            "partial": 0,
+            "missed": 0,
+            "spurious": 1,
+            "possible": 5,
+            "actual": 6,
+            "precision": 0.6666666666666666,
+            "recall": 0.8,
+            "f1": 0.7272727272727272
+        },
+        "DATE": {
+            "correct": 65,
+            "incorrect": 7,
+            "partial": 0,
+            "missed": 5,
+            "spurious": 12,
+            "possible": 77,
+            "actual": 84,
+            "precision": 0.7738095238095238,
+            "recall": 0.8441558441558441,
+            "f1": 0.8074534161490684
+        },
+        "PER": {
+            "correct": 260,
+            "incorrect": 24,
+            "partial": 0,
+            "missed": 15,
+            "spurious": 10,
+            "possible": 299,
+            "actual": 294,
+            "precision": 0.8843537414965986,
+            "recall": 0.8695652173913043,
+            "f1": 0.8768971332209107
+        },
+        "ORG": {
+            "correct": 92,
+            "incorrect": 34,
+            "partial": 0,
+            "missed": 24,
+            "spurious": 14,
+            "possible": 150,
+            "actual": 140,
+            "precision": 0.6571428571428571,
+            "recall": 0.6133333333333333,
+            "f1": 0.6344827586206896
+        },
+        "TIME": {
+            "correct": 2,
+            "incorrect": 2,
+            "partial": 0,
+            "missed": 2,
+            "spurious": 1,
+            "possible": 6,
+            "actual": 5,
+            "precision": 0.4,
+            "recall": 0.3333333333333333,
+            "f1": 0.3636363636363636
+        },
+        "TITLE": {
+            "correct": 32,
+            "incorrect": 6,
+            "partial": 0,
+            "missed": 13,
+            "spurious": 5,
+            "possible": 51,
+            "actual": 43,
+            "precision": 0.7441860465116279,
+            "recall": 0.6274509803921569,
+            "f1": 0.6808510638297872
+        },
+        "EVENT": {
+            "correct": 7,
+            "incorrect": 3,
+            "partial": 0,
+            "missed": 16,
+            "spurious": 2,
+            "possible": 26,
+            "actual": 12,
+            "precision": 0.5833333333333334,
+            "recall": 0.2692307692307692,
+            "f1": 0.3684210526315789
+        },
+        "PERCENT": {
+            "correct": 1,
+            "incorrect": 0,
+            "partial": 0,
+            "missed": 0,
+            "spurious": 0,
+            "possible": 1,
+            "actual": 1,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+        },
+        "PROD": {
+            "correct": 74,
+            "incorrect": 22,
+            "partial": 0,
+            "missed": 22,
+            "spurious": 19,
+            "possible": 118,
+            "actual": 115,
+            "precision": 0.6434782608695652,
+            "recall": 0.6271186440677966,
+            "f1": 0.6351931330472103
+        },
+        "LOC": {
+            "correct": 16,
+            "incorrect": 13,
+            "partial": 0,
+            "missed": 6,
+            "spurious": 3,
+            "possible": 35,
+            "actual": 32,
+            "precision": 0.5,
+            "recall": 0.45714285714285713,
+            "f1": 0.4776119402985075
+        },
+        "GPE": {
+            "correct": 175,
+            "incorrect": 34,
+            "partial": 0,
+            "missed": 22,
+            "spurious": 15,
+            "possible": 231,
+            "actual": 224,
+            "precision": 0.78125,
+            "recall": 0.7575757575757576,
+            "f1": 0.7692307692307692
+        }
+    }
+}
